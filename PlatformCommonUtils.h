@@ -139,6 +139,67 @@ namespace PlatformCommonUtils
 		delete[] buffer;
 	}
 
+	/************ Parse binary data ************/
+	inline uint32_t bin_to_uint32(const uint8_t* data, bool is_little_endian = true) 
+	{
+		// little endian
+		if (is_little_endian) {
+			uint32_t result;
+			std::memcpy(&result, data, sizeof(result));
+			return result;
+		}
+
+		// big endian
+		return
+			(static_cast<uint32_t>(*data++) << 24) |
+			(static_cast<uint32_t>(*data++) << 16) |
+			(static_cast<uint32_t>(*data++) << 8) |
+			(static_cast<uint32_t>(*data++) << 0);
+	}
+
+	inline uint64_t bin_to_uint64(const uint8_t* data, bool is_little_endian = true)
+	{
+		// little endian
+		if (is_little_endian) {
+			uint64_t result;
+			std::memcpy(&result, data, sizeof(result));
+			return result;
+		}
+
+		// big endian
+		return
+			(static_cast<uint64_t>(*data++) << 56) |
+			(static_cast<uint64_t>(*data++) << 48) |
+			(static_cast<uint64_t>(*data++) << 40) |
+			(static_cast<uint64_t>(*data++) << 32) |
+			(static_cast<uint64_t>(*data++) << 24) |
+			(static_cast<uint64_t>(*data++) << 16) |
+			(static_cast<uint64_t>(*data++) << 8) |
+			(static_cast<uint64_t>(*data++) << 0);
+	}
+
+	inline uint32_t swap_uint32(uint32_t val)
+	{
+		return
+			((val & 0xFF000000) >> 24) |
+			((val & 0x00FF0000) >> 8)  |
+			((val & 0x0000FF00) << 8)  |
+			((val & 0x000000FF) << 24);
+	}
+
+	inline uint64_t swap_uint64(uint64_t val)
+	{
+		return
+			((val & 0xFF00000000000000) << 56) |
+			((val & 0x00FF000000000000) << 48) |
+			((val & 0x0000FF0000000000) << 40) |
+			((val & 0x000000FF00000000) << 32) |
+			((val & 0x00000000FF000000) << 24) |
+			((val & 0x0000000000FF0000) << 16) |
+			((val & 0x000000000000FF00) << 8) |
+			((val & 0x00000000000000FF) << 0);
+	}
+
 	/************ Other ************/
 	std::string get_current_directory_path();
 	std::string get_current_time();
