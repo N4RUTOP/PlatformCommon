@@ -12,6 +12,8 @@
 #include <Psapi.h>
 #include <shlwapi.h>
 #include <TlHelp32.h>
+#pragma comment(lib, "Shlwapi.lib")
+#pragma warning(disable : 4996)
 #else
 #include <mach-o/dyld.h>
 #include <iconv.h>
@@ -28,6 +30,8 @@ using namespace std;
 namespace fs = std::filesystem;
 
 static bool s_is_debug = false;
+
+static std::string s_log_tag_name = "DEV";
 
 static std::pair<PlatformCommonUtils::log_info_callback, void*> s_log_cb{ nullptr, nullptr };
 
@@ -126,7 +130,7 @@ static bool traverse_process(Func&& cb, Args&&... args)
 	if (cb == nullptr) return false;
 	STARTUPINFO st;
 	PROCESS_INFORMATION pi;
-	PROCESSENTRY32 ps;
+	PROCESSENTRY32W ps;
 	HANDLE hSnapshot = INVALID_HANDLE_VALUE;
 	memset(&st, 0, sizeof(STARTUPINFO));
 	st.cb = sizeof(STARTUPINFO);
@@ -136,12 +140,12 @@ static bool traverse_process(Func&& cb, Args&&... args)
 
 	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	if (hSnapshot == INVALID_HANDLE_VALUE) return false;
-	if (!Process32First(hSnapshot, &ps)) return false;
+	if (!Process32FirstW(hSnapshot, &ps)) return false;
 	do {
 		if (cb(&ps, std::forward<Args>(args)...)) {
 			break;
 		}
-	} while (Process32Next(hSnapshot, &ps));
+	} while (Process32NextW(hSnapshot, &ps));
 	CloseHandle(hSnapshot);
 	return true;
 #else
@@ -835,6 +839,16 @@ std::pair<PlatformCommonUtils::log_info_callback, void*> PlatformCommonUtils::ge
 	return s_log_cb;
 }
 
+void PlatformCommonUtils::set_log_tag_name(const std::string& name)
+{
+	s_log_tag_name = name;
+}
+
+std::string PlatformCommonUtils::get_log_tag_name()
+{
+	return s_log_tag_name;
+}
+
 void PlatformCommonUtils::set_debug_output(bool bDebug)
 {
 	s_is_debug = bDebug;
@@ -1066,7 +1080,7 @@ bool PlatformCommonUtils::kill_process(const std::string& proc_path)
 	auto _proc_path = utf8_to_wchar(proc_path.c_str());
 	wchar_t* file_name = PathFindFileNameW(_proc_path.get());
 	bool res = false;
-	static auto kill_func = [](PPROCESSENTRY32 ps, bool& res, wchar_t* file_name, std::shared_ptr<wchar_t> _proc_path) -> bool 
+	static auto kill_func = [](PPROCESSENTRY32W ps, bool& res, wchar_t* file_name, std::shared_ptr<wchar_t> _proc_path) -> bool
 	{
 		if (0 == wcscmp(ps->szExeFile, file_name)) {
 			HANDLE killHandle = OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION |   // Required by Alpha
@@ -1076,7 +1090,7 @@ bool PlatformCommonUtils::kill_process(const std::string& proc_path)
 				FALSE, ps->th32ProcessID);
 			if (INVALID_HANDLE_VALUE != killHandle) {
 				wchar_t path[MAX_PATH] = { 0 };
-				GetModuleFileNameEx(killHandle, nullptr, path, MAX_PATH);
+				GetModuleFileNameExW(killHandle, nullptr, path, MAX_PATH);
 				fs::path _path1 = path;
 				fs::path _path2 = _proc_path.get();
 				if (fs::canonical(_path1) == fs::canonical(_path2)) { // format path
@@ -1123,7 +1137,7 @@ bool PlatformCommonUtils::kill_process_by_name(const std::string& proc_name)
 #if WIN32
 	auto _proc_name = utf8_to_wchar(proc_name.c_str());
 	bool res = false;
-	static auto kill_func = [](PPROCESSENTRY32 ps, bool& res, std::shared_ptr<wchar_t> _proc_name) -> bool
+	static auto kill_func = [](PPROCESSENTRY32W ps, bool& res, std::shared_ptr<wchar_t> _proc_name) -> bool
 	{
 		if (0 == wcscmp(ps->szExeFile, _proc_name.get())) {
 			HANDLE killHandle = OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION |   // Required by Alpha
@@ -1225,7 +1239,7 @@ bool PlatformCommonUtils::is_process_running(const std::string& proc_path)
 	auto _proc_path = utf8_to_wchar(proc_path.c_str());
 	wchar_t* file_name = PathFindFileNameW(_proc_path.get());
 	bool res = false;
-	static auto check_proc = [](PPROCESSENTRY32 ps, bool& res, wchar_t* file_name, std::shared_ptr<wchar_t> _proc_path) -> bool
+	static auto check_proc = [](PPROCESSENTRY32W ps, bool& res, wchar_t* file_name, std::shared_ptr<wchar_t> _proc_path) -> bool
 	{
 		if (0 == wcscmp(ps->szExeFile, file_name)) {
 			HANDLE killHandle = OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION |   // Required by Alpha
@@ -1235,7 +1249,7 @@ bool PlatformCommonUtils::is_process_running(const std::string& proc_path)
 				FALSE, ps->th32ProcessID);
 			if (INVALID_HANDLE_VALUE != killHandle) {
 				wchar_t path[MAX_PATH] = { 0 };
-				GetModuleFileNameEx(killHandle, nullptr, path, MAX_PATH);
+				GetModuleFileNameExW(killHandle, nullptr, path, MAX_PATH);
 				fs::path _path1 = path;
 				fs::path _path2 = _proc_path.get();
 				if (fs::canonical(_path1) == fs::canonical(_path2)) { // format path
@@ -1275,7 +1289,7 @@ bool PlatformCommonUtils::is_process_running_by_name(const std::string& proc_nam
 #if WIN32
 	auto _proc_name = utf8_to_wchar(proc_name.c_str());
 	bool res = false;
-	static auto check_proc = [](PPROCESSENTRY32 ps, bool& res, std::shared_ptr<wchar_t> _proc_name) -> bool
+	static auto check_proc = [](PPROCESSENTRY32W ps, bool& res, std::shared_ptr<wchar_t> _proc_name) -> bool
 	{
 		if (0 == wcscmp(ps->szExeFile, _proc_name.get())) {
 			res = true;

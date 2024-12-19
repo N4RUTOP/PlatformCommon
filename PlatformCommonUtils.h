@@ -1,11 +1,12 @@
-/**************************************
+/**
 *
 *	Platform common functions (Windows，MacOs)
 *	
 *	Create by lihuanqian on 5/24/2024
+* 
 *	Copyright (c) lihuanqian All Rights Reserved. 
 *
-***************************************/
+*/
 
 #pragma once
 #include <string>
@@ -115,6 +116,8 @@ namespace PlatformCommonUtils
 	/************ Log output ************/
 	void set_log_info_callback(log_info_callback cb, void* user_data, bool debug);
 	std::pair<log_info_callback, void*> get_log_info_cb();
+	void set_log_tag_name(const std::string& name);
+	std::string get_log_tag_name();
 
 	template<typename ...Args>
 	void output_log_info(const char* info, Args&&... args)
@@ -156,15 +159,15 @@ namespace PlatformCommonUtils
 #define String_Constructor(psz) (std::string(psz != nullptr ? psz : ""))
 
 #define LOG_INFO(fmt, ...) do { \
-    PlatformCommonUtils::output_log_info("[%s] [DEVT_INFO] " fmt "\n", PlatformCommonUtils::get_current_time().c_str(), ##__VA_ARGS__); \
+    PlatformCommonUtils::output_log_info("[%s] [%s_INFO] " fmt "\n", PlatformCommonUtils::get_current_time().c_str(), PlatformCommonUtils::get_log_tag_name().c_str(), ##__VA_ARGS__); \
 } while(0)
 
 #define LOG_ERROR(fmt, ...) do { \
-    PlatformCommonUtils::output_log_info("[%s] [DEVT_ERROR] " fmt "\n", PlatformCommonUtils::get_current_time().c_str(), ##__VA_ARGS__); \
+    PlatformCommonUtils::output_log_info("[%s] [%s_ERROR] " fmt "\n", PlatformCommonUtils::get_current_time().c_str(), PlatformCommonUtils::get_log_tag_name().c_str(), ##__VA_ARGS__); \
 } while(0)
 
 #define LOG_DEBUG(fmt, ...) do {\
 	if (PlatformCommonUtils::is_debug()) {\
-		PlatformCommonUtils::output_log_info("[%s] [DEVT_DEBUG] " fmt "\n", PlatformCommonUtils::get_current_time().c_str(), ##__VA_ARGS__); \
+		PlatformCommonUtils::output_log_info("[%s] [%s_DEBUG] " fmt "\n", PlatformCommonUtils::get_current_time().c_str(), PlatformCommonUtils::get_log_tag_name().c_str(), ##__VA_ARGS__); \
 	} \
 } while (0)
