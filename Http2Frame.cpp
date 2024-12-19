@@ -1,7 +1,5 @@
 #include "Http2Frame.h"
 
-
-
 /** Http2Frame */
 Http2Frame::Http2Frame(uint32_t streamId, uint8_t flags, uint8_t type):
     m_streamId(streamId),
@@ -23,6 +21,7 @@ std::vector<uint8_t> Http2Frame::serialize()
 std::vector<uint8_t> Http2Frame::serializeHead()
 {
     std::vector<uint8_t> header;
+    header.reserve(9);
 
     // Length spread 8 bit of 24
     header.push_back((m_bodyLen >> 16) & 0xFF); 
@@ -50,6 +49,7 @@ Http2SettingsFrame::Http2SettingsFrame(uint8_t flags, uint32_t streamID, const S
 std::vector<uint8_t> Http2SettingsFrame::serializeBody()
 {
     std::vector<uint8_t> serialized;
+    serialized.reserve(m_settings.size() * 6);
     for (const auto& entry : m_settings) {
         // Each setting consists of a 1-byte setting ID and a 4-byte setting value
         serialized.push_back((entry.first >> 8) & 0xFF);
@@ -71,6 +71,7 @@ Http2WindowUpdateFrame::Http2WindowUpdateFrame(uint32_t streamId, uint32_t windo
 std::vector<uint8_t> Http2WindowUpdateFrame::serializeBody()
 {
     std::vector<uint8_t> body;
+    body.reserve(4);
     body.push_back((m_windowIncrement >> 24) & 0xFF);
     body.push_back((m_windowIncrement >> 16) & 0xFF);
     body.push_back((m_windowIncrement >> 8) & 0xFF);
@@ -172,6 +173,7 @@ uint32_t Http2FrameHeadParser::getDataSize()
     if (m_data.size() < 9) {
         return 0;
     }
+    // big endian
     return (static_cast<uint32_t>(m_data[0]) << 16) |
            (static_cast<uint32_t>(m_data[1]) << 8) |
            static_cast<uint32_t>(m_data[2]);
@@ -190,6 +192,7 @@ uint32_t Http2FrameHeadParser::getStreamId()
     if (m_data.size() < 9) {
         return 0;
     }
+    // big endian
     return (static_cast<uint32_t>(m_data[5]) << 24) |
            (static_cast<uint32_t>(m_data[6]) << 16) |
            (static_cast<uint32_t>(m_data[7]) << 8) |

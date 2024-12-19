@@ -23,10 +23,13 @@ public:
     Http2Frame(uint32_t streamId, uint8_t flags, uint8_t type);
 	virtual ~Http2Frame() {}
 
+	/** serialize all data */
 	virtual std::vector<uint8_t> serialize();
 
+    /** serialize head data */
 	virtual std::vector<uint8_t> serializeHead();
 
+    /** serialize body data */
 	virtual std::vector<uint8_t> serializeBody() = 0;
 
 protected:
@@ -36,6 +39,9 @@ protected:
 	uint32_t m_bodyLen;
 };
 
+/**
+ * @brief Setting Frame
+ */
 class Http2SettingsFrame : public Http2Frame
 {
 public:
@@ -68,6 +74,9 @@ public:
     SettingsMap m_settings;
 };
 
+/**
+ * @brief Window Update Frame
+ */
 class Http2WindowUpdateFrame : public Http2Frame
 {
 public:
@@ -81,6 +90,9 @@ private:
     uint32_t m_windowIncrement;
 };
 
+/**
+ * @brief Headers Frame
+ */
 class Http2HeadersFrame : public Http2Frame
 {
 public:
@@ -112,7 +124,9 @@ private:
     uint8_t m_weight;
 };
 
-
+/**
+ * @brief Data Frame
+ */
 class Http2DataFrame : public Http2Frame
 {
 public:
@@ -129,16 +143,16 @@ private:
 
 /**
  *  -------------  --------------
- * |  size 3byte ||  type 1byte  |
+ * | Size 3byte  ||  Type 1byte  |
  *  -------------  --------------
  *  ------------- 
- * | flags 1byte |
+ * | Flags 1byte |
  *  ------------- 
  *  -----------------------------
- * |       stream id 4byte       |
+ * |       Stream id 4byte       |
  *  -----------------------------
  *  -----------------------------
- * |           data              |
+ * |            Data             |
  *  -----------------------------
  */
 class Http2FrameHeadParser 
@@ -157,12 +171,16 @@ public:
     Http2FrameHeadParser(const std::vector<uint8_t>& frameHead);
     void setFrameHead(const std::vector<uint8_t>& frameHead);
 
+    /** get frame type */
     FrameType getFrameType();
 
+    /** get data size */
     uint32_t getDataSize();
 
+    /** get flags */
     uint8_t getFlags();
 
+    /** get stream id */
     uint32_t getStreamId();
 
 private:
