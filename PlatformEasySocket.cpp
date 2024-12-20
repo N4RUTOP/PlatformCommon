@@ -1,6 +1,6 @@
 #include "PlatformEasySocket.h"
 #include <mutex>
-#ifdef WIN32
+#ifdef _MSC_VER
 #include <ws2tcpip.h>
 #pragma comment(lib, "Ws2_32.lib")
 #else
@@ -19,7 +19,7 @@
 #define SOCKET_ERROR  -1
 #endif
 
-#ifdef WIN32
+#ifdef _MSC_VER
 static std::once_flag s_wsaInitFlag;
 class InitializeWSAMgr
 {
@@ -45,7 +45,7 @@ static void initializeWSA()
 PlatformEasySocket::PlatformEasySocket():
     m_socket(INVALID_SOCKET)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
     std::call_once(s_wsaInitFlag, initializeWSA);
 #endif
 }
@@ -53,7 +53,7 @@ PlatformEasySocket::PlatformEasySocket():
 PlatformEasySocket::PlatformEasySocket(const SocketSetupOptions& opts):
     m_socket(INVALID_SOCKET)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
     std::call_once(s_wsaInitFlag, initializeWSA);
 #endif
     setupSocket(opts);
@@ -139,7 +139,7 @@ bool PlatformEasySocket::close()
     if (m_socket == INVALID_SOCKET) {
         return false;
     }
-#ifdef WIN32
+#ifdef _MSC_VER
     ::closesocket(m_socket);
 #else
     ::close(m_socket);
@@ -153,7 +153,7 @@ bool PlatformEasySocket::shutdown()
     if (m_socket == INVALID_SOCKET) {
         return false;
     }
-#ifdef WIN32
+#ifdef _MSC_VER
     ::shutdown(m_socket, SD_SEND);
 #else
     ::shutdown(m_socket, SHUT_WR);
@@ -256,7 +256,7 @@ std::optional<int> PlatformEasySocket::recvRaw(char* byte, int len)
 
 int PlatformEasySocket::error() const
 {
-#ifdef WIN32
+#ifdef _MSC_VER
     return ::WSAGetLastError();
 #else
     return errno;
@@ -265,7 +265,7 @@ int PlatformEasySocket::error() const
 
 std::string PlatformEasySocket::getErrorString() const
 {
-#ifdef WIN32
+#ifdef _MSC_VER
     char* errMsg = nullptr;
     ::FormatMessageA(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,

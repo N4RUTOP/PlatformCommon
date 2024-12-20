@@ -10,7 +10,7 @@
 #include "IEasySocket.h"
 #include <string>
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #include <winsock2.h>
 #else
 #include <sys/socket.h>
@@ -22,7 +22,7 @@ struct SocketSetupOptions
     int af = AF_INET; // default AF_INET
     int type = SOCK_STREAM; // default SOCK_STREAM
     int protocol =
-#ifdef WIN32
+#ifdef _MSC_VER
     // default IPPROTO_TCP
 	IPPROTO_TCP;
 #else
@@ -72,7 +72,7 @@ public:
 	std::string getErrorString() const;
 
 private:
-#ifdef WIN32
+#ifdef _MSC_VER
 using socket_t = SOCKET;
 #else
 using socket_t = int;

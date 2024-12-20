@@ -694,7 +694,7 @@ bool PlatformCommonUtils::mkdir_with_parents(const char* dir, int mode)
 		return true;
 	}
 	else {
-#if WIN32
+#if _MSC_VER
 		int lastError = GetLastError();
 
 		if (lastError == ERROR_ALREADY_EXISTS || lastError == ERROR_SUCCESS) return 0;
@@ -1076,7 +1076,7 @@ int PlatformCommonUtils::execute_process(const std::string& cmd)
 
 bool PlatformCommonUtils::kill_process(const std::string& proc_path)
 {
-#if WIN32
+#if _MSC_VER
 	auto _proc_path = utf8_to_wchar(proc_path.c_str());
 	wchar_t* file_name = PathFindFileNameW(_proc_path.get());
 	bool res = false;
@@ -1134,7 +1134,7 @@ bool PlatformCommonUtils::kill_process(const std::string& proc_path)
 
 bool PlatformCommonUtils::kill_process_by_name(const std::string& proc_name)
 {
-#if WIN32
+#if _MSC_VER
 	auto _proc_name = utf8_to_wchar(proc_name.c_str());
 	bool res = false;
 	static auto kill_func = [](PPROCESSENTRY32W ps, bool& res, std::shared_ptr<wchar_t> _proc_name) -> bool
@@ -1235,7 +1235,7 @@ bool PlatformCommonUtils::is_process_running(int process_id)
 
 bool PlatformCommonUtils::is_process_running(const std::string& proc_path)
 {
-#if WIN32
+#if _MSC_VER
 	auto _proc_path = utf8_to_wchar(proc_path.c_str());
 	wchar_t* file_name = PathFindFileNameW(_proc_path.get());
 	bool res = false;
@@ -1286,7 +1286,7 @@ bool PlatformCommonUtils::is_process_running(const std::string& proc_path)
 
 bool PlatformCommonUtils::is_process_running_by_name(const std::string& proc_name)
 {
-#if WIN32
+#if _MSC_VER
 	auto _proc_name = utf8_to_wchar(proc_name.c_str());
 	bool res = false;
 	static auto check_proc = [](PPROCESSENTRY32W ps, bool& res, std::shared_ptr<wchar_t> _proc_name) -> bool
