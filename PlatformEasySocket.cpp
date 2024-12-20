@@ -26,12 +26,12 @@ class InitializeWSAMgr
 public:
     InitializeWSAMgr() {
         WSADATA wsaData;
-        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        if (::WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
             // LOG
         }
     }
     ~InitializeWSAMgr() {
-        WSACleanup();
+        ::WSACleanup();
     }
 };
 
@@ -140,7 +140,7 @@ bool PlatformEasySocket::close()
         return false;
     }
 #ifdef WIN32
-    closesocket(m_socket);
+    ::closesocket(m_socket);
 #else
     ::close(m_socket);
 #endif
@@ -257,7 +257,7 @@ std::optional<int> PlatformEasySocket::recvRaw(char* byte, int len)
 int PlatformEasySocket::error() const
 {
 #ifdef WIN32
-    return WSAGetLastError();
+    return ::WSAGetLastError();
 #else
     return errno;
 #endif
@@ -267,7 +267,7 @@ std::string PlatformEasySocket::getErrorString() const
 {
 #ifdef WIN32
     char* errMsg = nullptr;
-    FormatMessageA(
+    ::FormatMessageA(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
         nullptr,
         error(),
@@ -276,9 +276,8 @@ std::string PlatformEasySocket::getErrorString() const
         0,
         nullptr);
     std::string errStr = errMsg ? errMsg : "Unknown error";
-    LocalFree(errMsg);
+    ::LocalFree(errMsg);
     return errStr;
-    
 #else
     return std::string(strerror(errno));
 #endif

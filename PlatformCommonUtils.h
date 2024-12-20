@@ -16,8 +16,9 @@
 #include <chrono>
 #include <filesystem>
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #include <Windows.h>
+#include <intrin.h>
 #elif defined(__APPLE__)
 #include <os/log.h>
 #include <utility>
@@ -35,7 +36,7 @@ struct entry {
 namespace PlatformCommonUtils
 {
 	/************ Type define ************/
-#ifdef WIN32
+#ifdef _MSC_VER
 	using mutex_t = LPCRITICAL_SECTION;
 #else 
 	using mutex_t = pthread_mutex_t;
@@ -46,7 +47,7 @@ namespace PlatformCommonUtils
 	bool path_exisit(const std::string& path);
 	bool path_exisit(const char* path);
 
-#ifdef WIN32
+#ifdef _MSC_VER
 	bool path_exisit(const std::wstring& path);
 	bool path_exisit(const wchar_t* path);
 #endif
@@ -129,7 +130,7 @@ namespace PlatformCommonUtils
 			pair.first(buffer, pair.second);
 		}
 		else {
-#ifdef WIN32
+#ifdef _MSC_VER
 			OutputDebugStringA(buffer);
 #else
 			//os_log(OS_LOG_DEFAULT, "%{public}s", buffer);
@@ -140,64 +141,32 @@ namespace PlatformCommonUtils
 	}
 
 	/************ Parse binary data ************/
-	inline uint32_t bin_to_uint32(const uint8_t* data, bool is_little_endian = true) 
-	{
-		// little endian
-		if (is_little_endian) {
-			uint32_t result;
-			std::memcpy(&result, data, sizeof(result));
-			return result;
-		}
-
-		// big endian
-		return
-			(static_cast<uint32_t>(*data++) << 24) |
-			(static_cast<uint32_t>(*data++) << 16) |
-			(static_cast<uint32_t>(*data++) << 8) |
-			(static_cast<uint32_t>(*data++) << 0);
-	}
-
-	inline uint64_t bin_to_uint64(const uint8_t* data, bool is_little_endian = true)
-	{
-		// little endian
-		if (is_little_endian) {
-			uint64_t result;
-			std::memcpy(&result, data, sizeof(result));
-			return result;
-		}
-
-		// big endian
-		return
-			(static_cast<uint64_t>(*data++) << 56) |
-			(static_cast<uint64_t>(*data++) << 48) |
-			(static_cast<uint64_t>(*data++) << 40) |
-			(static_cast<uint64_t>(*data++) << 32) |
-			(static_cast<uint64_t>(*data++) << 24) |
-			(static_cast<uint64_t>(*data++) << 16) |
-			(static_cast<uint64_t>(*data++) << 8) |
-			(static_cast<uint64_t>(*data++) << 0);
-	}
-
 	inline uint32_t swap_uint32(uint32_t val)
 	{
-		return
-			((val & 0xFF000000) >> 24) |
-			((val & 0x00FF0000) >> 8)  |
-			((val & 0x0000FF00) << 8)  |
-			((val & 0x000000FF) << 24);
+#ifdef _MSC_VER
+		return _byteswap_ulong(val);
+#else
+		return __builtin_bswap32(val);
+#endif
 	}
 
 	inline uint64_t swap_uint64(uint64_t val)
 	{
-		return
-			((val & 0xFF00000000000000) << 56) |
-			((val & 0x00FF000000000000) << 48) |
-			((val & 0x0000FF0000000000) << 40) |
-			((val & 0x000000FF00000000) << 32) |
-			((val & 0x00000000FF000000) << 24) |
-			((val & 0x0000000000FF0000) << 16) |
-			((val & 0x000000000000FF00) << 8) |
-			((val & 0x00000000000000FF) << 0);
+#ifdef _MSC_VER
+		return _byteswap_uint64(val);
+#else
+		return __builtin_bswap64(val);
+#endif 
+	}
+
+	inline uint32_t bin_to_uint32(const uint8_t* data, bool is_little_endian = true)
+	{
+		return is_little_endian ? *reinterpret_cast<const uint32_t*>(data) : swap_uint32(*reinterpret_cast<const uint32_t*>(data));
+	}
+
+	inline uint64_t bin_to_uint64(const uint8_t* data, bool is_little_endian = true)
+	{
+		return is_little_endian ? *reinterpret_cast<const uint64_t*>(data) : swap_uint64(*reinterpret_cast<const uint64_t*>(data));
 	}
 
 	/************ Other ************/
@@ -207,11 +176,10 @@ namespace PlatformCommonUtils
 	bool is_debug();
 	int get_current_thread_id();
 
-#ifdef WIN32
+#ifdef _MSC_VER
 	void usleep(uint32_t waitTime);
 #endif
 	void msleep(uint32_t waitTime);
-
 };
 
 /**

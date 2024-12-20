@@ -7,7 +7,7 @@
 #include <time.h>
 #include <array>
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #include <Windows.h>
 #include <Psapi.h>
 #include <shlwapi.h>
@@ -69,7 +69,7 @@ static char* dirname(char* path)
 	return buffer;
 }
 
-#ifdef WIN32
+#ifdef _MSC_VER
 static int win32err_to_errno(int err_value)
 {
 	switch (err_value) {
@@ -108,7 +108,7 @@ static char* string_build_path(const char* elem, ...)
 	arg = va_arg(args, char*);
 
 	while (arg) {
-#ifdef WIN32
+#ifdef _MSC_VER
 		strcat(out, "\\");
 #else
 		strcat(out, "/");
@@ -126,7 +126,7 @@ static char* string_build_path(const char* elem, ...)
 template<typename Func, typename... Args>
 static bool traverse_process(Func&& cb, Args&&... args)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	if (cb == nullptr) return false;
 	STARTUPINFO st;
 	PROCESS_INFORMATION pi;
@@ -173,7 +173,7 @@ static bool traverse_process(Func&& cb, Args&&... args)
 std::shared_ptr<wchar_t> PlatformCommonUtils::utf8_to_wchar(const char* data)
 {
 	std::shared_ptr<wchar_t> retData = nullptr;
-#ifdef WIN32
+#ifdef _MSC_VER
 	int len = MultiByteToWideChar(CP_UTF8, 0, data, -1, nullptr, 0);
 	if (len <= 0) return retData;
 	retData = std::shared_ptr<wchar_t>(new wchar_t[len], [](wchar_t* p) { delete[] p; });
@@ -214,7 +214,7 @@ std::shared_ptr<wchar_t> PlatformCommonUtils::utf8_to_wchar(const char* data)
 std::shared_ptr<char> PlatformCommonUtils::wchar_to_utf8(const wchar_t* data)
 {
 	std::shared_ptr<char> retData = nullptr;
-#ifdef WIN32
+#ifdef _MSC_VER
 	int len = WideCharToMultiByte(CP_UTF8, 0, data, -1, nullptr, 0, nullptr, nullptr);
 	if (len <= 0) return retData;
 	retData = std::shared_ptr<char>(new char[len], [](char* p) { delete[] p; });
@@ -254,7 +254,7 @@ std::shared_ptr<char> PlatformCommonUtils::wchar_to_utf8(const wchar_t* data)
 
 std::shared_ptr<char> PlatformCommonUtils::utf8_to_local_encoding(const char* utf8Str)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	int wideCharSize = MultiByteToWideChar(CP_UTF8, 0, utf8Str, -1, nullptr, 0);
 	if (wideCharSize == 0)
 	{
@@ -298,7 +298,7 @@ bool PlatformCommonUtils::compare_string_insensitive(const std::string& str1, co
 
 bool PlatformCommonUtils::path_is_dir(const char* path)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	auto wPath = utf8_to_wchar(path);
 	struct _stat buffer;
 	bool exists = (_wstat(wPath.get(), &buffer) == 0);
@@ -317,7 +317,7 @@ bool PlatformCommonUtils::path_is_dir(const char* path)
 
 bool PlatformCommonUtils::path_is_file(const char* path)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	auto wPath = utf8_to_wchar(path);
 	struct _stat buffer;
 	bool exists = (_wstat(wPath.get(), &buffer) == 0);
@@ -343,7 +343,7 @@ bool PlatformCommonUtils::path_is_file(const char* path)
 
 size_t PlatformCommonUtils::get_file_size(const char* path)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	auto wPath = utf8_to_wchar(path);
 	struct _stat buffer;
 	bool exists = (_wstat(wPath.get(), &buffer) == 0);
@@ -362,7 +362,7 @@ size_t PlatformCommonUtils::get_file_size(const char* path)
 
 bool PlatformCommonUtils::path_exisit(const char* path)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	auto wPath = utf8_to_wchar(path);
 	struct _stat buffer;
 	return (_wstat(wPath.get(), &buffer) == 0);
@@ -377,7 +377,7 @@ bool PlatformCommonUtils::path_exisit(const std::string& path)
 	return path_exisit(path.c_str());
 }
 
-#ifdef WIN32
+#ifdef _MSC_VER
 bool PlatformCommonUtils::path_exisit(const std::wstring& path) {
 	return path_exisit(path.c_str());
 }
@@ -394,7 +394,7 @@ bool PlatformCommonUtils::make_directory(const char* path, int mode)
 		return true;
 	}
 
-#ifdef WIN32
+#ifdef _MSC_VER
 	// CreateDirectory returns a non-zero value on success,
 	// and zero on failure
 	// https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createdirectorya
@@ -416,7 +416,7 @@ bool PlatformCommonUtils::remove_directory(const char* path)
 	}
 
 	int e = 0;
-#ifdef WIN32
+#ifdef _MSC_VER
 	auto _path = utf8_to_wchar(path);
 	if (!RemoveDirectoryW(_path.get())) {
 		e = win32err_to_errno(GetLastError());
@@ -439,7 +439,7 @@ bool PlatformCommonUtils::remove_file(const char* path)
 	}
 
 	bool res = false;
-#ifdef WIN32
+#ifdef _MSC_VER
 	auto _path = utf8_to_wchar(path);
 	res = std::filesystem::remove(_path.get());
 #else
@@ -541,7 +541,7 @@ bool PlatformCommonUtils::rmdir_recursive(const char* path)
 	if (!path_exisit(path)) {
 		return true;
 	}
-#ifdef WIN32
+#ifdef _MSC_VER
     uintmax_t remove_cnt = 0;
 	auto _path = utf8_to_wchar(path);
 	remove_cnt = fs::remove_all(_path.get());
@@ -703,7 +703,7 @@ bool PlatformCommonUtils::mkdir_with_parents(const char* dir, int mode)
 #endif
 	}
 	bool res;
-#ifdef WIN32
+#ifdef _MSC_VER
 	char* parent = _strdup(dir);
 #else
 	char* parent = strdup(dir);
@@ -749,7 +749,7 @@ std::string PlatformCommonUtils::extract_filename(const std::string& filePath)
 
 FILE* PlatformCommonUtils::open_file(const char* path, const char* mode)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	auto _path = utf8_to_wchar(path);
 	auto _mode = utf8_to_wchar(mode);
 	return _wfopen(_path.get(), _mode.get());
@@ -760,7 +760,7 @@ FILE* PlatformCommonUtils::open_file(const char* path, const char* mode)
 
 void PlatformCommonUtils::mutex_lock(mutex_t mutex)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	EnterCriticalSection(mutex);
 #else 
 	pthread_mutex_lock(&mutex);
@@ -769,7 +769,7 @@ void PlatformCommonUtils::mutex_lock(mutex_t mutex)
 
 void PlatformCommonUtils::mutex_unlock(mutex_t mutex)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	LeaveCriticalSection(mutex);
 #else 
 	pthread_mutex_unlock(&mutex);
@@ -874,7 +874,7 @@ std::string PlatformCommonUtils::get_current_time()
 
 int PlatformCommonUtils::get_current_thread_id()
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	return GetCurrentThreadId();
 #else
 	return mach_thread_self();
@@ -883,7 +883,7 @@ int PlatformCommonUtils::get_current_thread_id()
 
 bool PlatformCommonUtils::execute_process(const std::string& cmd, std::string& revMsg, int* exitCode)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	//LOG_INFO_D("excute cmd: %s", cmd.c_str());
 	SECURITY_ATTRIBUTES saAttr;
 	ZeroMemory(&saAttr, sizeof(SECURITY_ATTRIBUTES));
@@ -989,7 +989,7 @@ bool PlatformCommonUtils::execute_process(const std::string& cmd, std::string& r
 int PlatformCommonUtils::execute_process(const std::string& cmd)
 {
 	int procID = -1;
-#ifdef WIN32
+#ifdef _MSC_VER
 	//LOG_INFO_D("excute cmd: %s", cmd.c_str());
 	SECURITY_ATTRIBUTES saAttr;
 	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -1194,7 +1194,7 @@ void PlatformCommonUtils::kill_process_by_name_completely(const std::string& pro
 
 std::string PlatformCommonUtils::get_current_directory_path()
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	char szCurPath[MAX_PATH];
 	GetCurrentDirectoryA(MAX_PATH, szCurPath);
 	return string{ szCurPath };
@@ -1213,7 +1213,7 @@ std::string PlatformCommonUtils::get_current_directory_path()
 
 bool PlatformCommonUtils::is_process_running(int process_id)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, process_id);
 	if (hProc != nullptr) {
 		CloseHandle(hProc);
@@ -1320,7 +1320,7 @@ bool PlatformCommonUtils::is_process_running_by_name(const std::string& proc_nam
 #endif
 }
 
-#ifdef WIN32
+#ifdef _MSC_VER
 void PlatformCommonUtils::usleep(uint32_t waitTime)
 {
 	LARGE_INTEGER perfCnt, start, now;
@@ -1335,7 +1335,7 @@ void PlatformCommonUtils::usleep(uint32_t waitTime)
 
 void PlatformCommonUtils::msleep(uint32_t waitTime)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	Sleep(waitTime);
 #else
 	usleep(waitTime * 1000);
