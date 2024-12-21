@@ -758,6 +758,22 @@ FILE* PlatformCommonUtils::open_file(const char* path, const char* mode)
 #endif // WIN32
 }
 
+bool PlatformCommonUtils::write_data_to_file(const std::string& path, const std::vector<uint8_t>& data)
+{
+	return write_data_to_file(path.c_str(), data.data(), data.size());
+}
+
+bool PlatformCommonUtils::write_data_to_file(const char* path, const uint8_t* data, size_t len)
+{
+	FILE* f = open_file(path, "wb");
+	if (f) {
+		size_t wcnt = fwrite(data, 1, len, f);
+		fclose(f);
+		return wcnt == len;
+	}
+	return false;
+}
+
 void PlatformCommonUtils::mutex_lock(mutex_t mutex)
 {
 #ifdef _MSC_VER
