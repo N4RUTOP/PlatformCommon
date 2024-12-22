@@ -191,6 +191,7 @@ std::optional<std::vector<uint8_t>> PlatformEasySocket::recvData(int recvLen)
 
     int received = ::recv(m_socket, reinterpret_cast<char*>(res.data()), recvLen, 0);
     if (received == SOCKET_ERROR) {
+        printf("ERROR: %s\n", getErrorString().c_str());
         return std::nullopt;
     }
     res.resize(received);

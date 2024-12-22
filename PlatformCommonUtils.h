@@ -89,9 +89,12 @@ namespace PlatformCommonUtils
 	}
 
 	FILE* open_file(const char* path, const char* mode);
+	FILE* open_file(const std::string& path, const std::string& mode);
 
 	bool write_data_to_file(const std::string& path, const std::vector<uint8_t>& data);
 	bool write_data_to_file(const char* path, const uint8_t* data, size_t len);
+
+	std::vector<uint8_t> read_data_from_file(const std::string& path);
 
 	/************ Mutex ************/
 	void mutex_lock(mutex_t mutex);

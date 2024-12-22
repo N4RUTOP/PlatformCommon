@@ -758,6 +758,11 @@ FILE* PlatformCommonUtils::open_file(const char* path, const char* mode)
 #endif // WIN32
 }
 
+FILE* PlatformCommonUtils::open_file(const std::string& path, const std::string& mode)
+{
+	return open_file(path.c_str(), mode.c_str());
+}
+
 bool PlatformCommonUtils::write_data_to_file(const std::string& path, const std::vector<uint8_t>& data)
 {
 	return write_data_to_file(path.c_str(), data.data(), data.size());
@@ -772,6 +777,19 @@ bool PlatformCommonUtils::write_data_to_file(const char* path, const uint8_t* da
 		return wcnt == len;
 	}
 	return false;
+}
+
+std::vector<uint8_t> PlatformCommonUtils::read_data_from_file(const std::string& path)
+{
+	FILE* f = open_file(path, "rb");
+	size_t size = get_file_size(path.c_str());
+	std::vector<uint8_t> data(size);
+	if (f) {
+		data.reserve(size);
+		fread(data.data(), 1, size, f);
+		fclose(f);
+	}
+	return data;
 }
 
 void PlatformCommonUtils::mutex_lock(mutex_t mutex)

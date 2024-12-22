@@ -1,4 +1,12 @@
-﻿#pragma once
+﻿/**
+ *   Easy socket API
+ *
+ *   Created by lihuanqian on 12/14/2024
+ *
+ *   Copyright (c) lihuanqian. All rights reserved.
+ */
+
+#pragma once
 #include <stdint.h>
 #include <vector>
 #include <optional>
