@@ -10,28 +10,12 @@
 #include "IEasySocket.h"
 #include <string>
 
-#ifdef _MSC_VER
-#include <winsock2.h>
-#else
-#include <sys/socket.h>
-#endif // WIN32
-
 struct SocketSetupOptions
 {
 	/** socket setup */
-    int af = AF_INET; // default AF_INET
-    int type = SOCK_STREAM; // default SOCK_STREAM
-    int protocol =
-#ifdef _MSC_VER
-    // default IPPROTO_TCP
-	IPPROTO_TCP;
-#else
-    // The protocol specifies a particular protocol to be used with the
-    // socket.  Normally only a single protocol exists to support a
-    // particular socket type within a given protocol family, in which
-    // case protocol can be specified as 0.
-    0;
-#endif
+    int af = 0; 
+    int type = 0; 
+	int protocol = 0; 
 
 	int send_timeout = 5000; // send timeout (ms)
 	int recv_timeout = 5000; // send timeout (ms)
@@ -72,14 +56,8 @@ public:
 	std::string getErrorString() const;
 
 private:
-#ifdef _MSC_VER
-using socket_t = SOCKET;
-#else
-using socket_t = int;
-#endif // WIN32
-    
+	using socket_t = int;
     socket_t m_socket;
 	SocketSetupOptions m_opts;
-
 };
 

@@ -1,19 +1,18 @@
 #include "PlatformEasySocket.h"
 #include <mutex>
 #ifdef _MSC_VER
+#include <winsock2.h>
 #include <ws2tcpip.h>
 #pragma comment(lib, "Ws2_32.lib")
 #else
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #endif
-#include <format>
 
-#ifndef INVALID_SOCKET
-#define INVALID_SOCKET  0
-#endif // !INVALID_SOCKET
+#define INVALID_SOCKET_VALUE  0
 
 #ifndef SOCKET_ERROR
 #define SOCKET_ERROR  -1
@@ -43,7 +42,7 @@ static void initializeWSA()
 #endif
 
 PlatformEasySocket::PlatformEasySocket():
-    m_socket(INVALID_SOCKET)
+    m_socket(INVALID_SOCKET_VALUE)
 {
 #ifdef _MSC_VER
     std::call_once(s_wsaInitFlag, initializeWSA);
@@ -51,7 +50,7 @@ PlatformEasySocket::PlatformEasySocket():
 }
 
 PlatformEasySocket::PlatformEasySocket(const SocketSetupOptions& opts):
-    m_socket(INVALID_SOCKET)
+    m_socket(INVALID_SOCKET_VALUE)
 {
 #ifdef _MSC_VER
     std::call_once(s_wsaInitFlag, initializeWSA);
@@ -66,17 +65,17 @@ PlatformEasySocket::~PlatformEasySocket()
 
 bool PlatformEasySocket::setupSocket(const SocketSetupOptions& opts)
 {
-    if (m_opts == opts && m_socket != INVALID_SOCKET) {
+    if (m_opts == opts && m_socket != INVALID_SOCKET_VALUE) {
         return true;
     }
 
     m_opts = opts;
-    if (m_socket != INVALID_SOCKET) {
+    if (m_socket != INVALID_SOCKET_VALUE) {
         close();
     }
 
-    m_socket = socket(m_opts.af, m_opts.type, m_opts.protocol);
-    if (m_socket == INVALID_SOCKET) {
+    m_socket = (socket_t)socket(m_opts.af, m_opts.type, m_opts.protocol);
+    if (m_socket == INVALID_SOCKET_VALUE) {
         return false;
     }
 
@@ -103,7 +102,7 @@ SocketSetupOptions PlatformEasySocket::getCurrentSocketOptions()
 
 bool PlatformEasySocket::connect()
 {
-    if (m_socket == INVALID_SOCKET) {
+    if (m_socket == INVALID_SOCKET_VALUE) {
         return false;
     }
 
@@ -136,7 +135,7 @@ bool PlatformEasySocket::connect()
 
 bool PlatformEasySocket::close()
 {
-    if (m_socket == INVALID_SOCKET) {
+    if (m_socket == INVALID_SOCKET_VALUE) {
         return false;
     }
 #ifdef _MSC_VER
@@ -144,13 +143,13 @@ bool PlatformEasySocket::close()
 #else
     ::close(m_socket);
 #endif
-    m_socket = INVALID_SOCKET;
+    m_socket = INVALID_SOCKET_VALUE;
     return true;
 }
 
 bool PlatformEasySocket::shutdown()
 {
-    if (m_socket == INVALID_SOCKET) {
+    if (m_socket == INVALID_SOCKET_VALUE) {
         return false;
     }
 #ifdef _MSC_VER
@@ -163,7 +162,7 @@ bool PlatformEasySocket::shutdown()
 
 std::optional<int> PlatformEasySocket::sendData(const std::vector<uint8_t>& sendData)
 {
-    if (m_socket == INVALID_SOCKET) {
+    if (m_socket == INVALID_SOCKET_VALUE) {
         return std::nullopt;
     }
 
@@ -200,7 +199,7 @@ std::optional<std::vector<uint8_t>> PlatformEasySocket::recvData(int recvLen)
 
 std::optional<int> PlatformEasySocket::sendMessage(const std::string& message)
 {
-    if (m_socket == INVALID_SOCKET) {
+    if (m_socket == INVALID_SOCKET_VALUE) {
         return std::nullopt;
     }
 
@@ -236,7 +235,7 @@ std::optional<std::string> PlatformEasySocket::recvMessage(int recvLen)
 
 std::optional<int> PlatformEasySocket::sendRaw(const char* byte, int len)
 {
-    if (m_socket == INVALID_SOCKET) {
+    if (m_socket == INVALID_SOCKET_VALUE) {
         return std::nullopt;
     }
     int res = ::send(m_socket, byte, len, 0);
