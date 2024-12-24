@@ -12,6 +12,8 @@
 #include <vector>
 #include <map>
 
+static constexpr uint32_t HTTP2_HEAD_SIZE = 9;
+
 static const std::vector<uint8_t> HTTP2_MAGIC = {
     'P', 'R', 'I', ' ', '*', ' ', 'H', 'T', 'T', 'P', '/', '2', '.', '0', '\r', '\n',
     '\r', '\n', 'S', 'M', '\r', '\n', '\r', '\n'
@@ -46,13 +48,13 @@ class Http2SettingsFrame : public Http2Frame
 {
 public:
     // The flags defined for SETTINGS frames.
-    static const uint8_t FLAG_ACK = 0x01;
+    static constexpr uint8_t FLAG_ACK = 0x01;
 
     // The type byte defined for SETTINGS frames.
-    static const uint8_t TYPE = 0x04;
+    static constexpr uint8_t TYPE = 0x04;
 
     // Stream association (no stream in SETTINGS frames)
-    static const uint32_t STREAM_ASSOC_NO_STREAM = 0;
+    static constexpr uint32_t STREAM_ASSOC_NO_STREAM = 0;
 
     // The known settings
     enum SettingOption : uint16_t
@@ -80,7 +82,7 @@ public:
 class Http2WindowUpdateFrame : public Http2Frame
 {
 public:
-    static const uint8_t TYPE = 0x08;
+    static constexpr uint8_t TYPE = 0x08;
 
     Http2WindowUpdateFrame(uint32_t streamId, uint32_t windowIncrement);
 
@@ -96,7 +98,7 @@ private:
 class Http2HeadersFrame : public Http2Frame
 {
 public:
-    static const uint8_t TYPE = 0x01;
+    static constexpr uint8_t TYPE = 0x01;
 
     // Flags
     enum Flags : uint8_t
@@ -130,7 +132,7 @@ private:
 class Http2DataFrame : public Http2Frame
 {
 public:
-    static const uint8_t TYPE = 0x00;
+    static constexpr uint8_t TYPE = 0x00;
 
     Http2DataFrame(uint32_t streamId, const std::vector<uint8_t>& data, uint8_t padLength = 0);
 
