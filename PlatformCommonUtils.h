@@ -206,3 +206,14 @@ namespace PlatformCommonUtils
 		PlatformCommonUtils::output_log_info("[%s] [%s_DEBUG] " fmt "\n", PlatformCommonUtils::get_current_time().c_str(), PlatformCommonUtils::get_log_tag_name().c_str(), ##__VA_ARGS__); \
 	} \
 } while (0)
+
+#define TEST_TIMER_START    auto start = std::chrono::high_resolution_clock::now();
+
+#define TEST_TIMER_US_END   auto end = std::chrono::high_resolution_clock::now(); \
+						    LOG_INFO("Execution time: %d microseconds", std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
+
+#define TEST_TIMER_MS_END   auto end = std::chrono::high_resolution_clock::now(); \
+						    LOG_INFO("Execution time: %d milliseconds", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+
+#define TEST_TIMER_S_END    auto end = std::chrono::high_resolution_clock::now(); \
+						    LOG_INFO("Execution time: %d second", std::chrono::duration_cast<std::chrono::seconds>(end - start).count());
