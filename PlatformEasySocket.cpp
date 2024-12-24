@@ -80,16 +80,37 @@ bool PlatformEasySocket::setupSocket(const SocketSetupOptions& opts)
     }
 
     if (m_opts.recv_timeout != 0) {
+#ifdef _MSC_VER
         if (setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&m_opts.recv_timeout, sizeof(m_opts.recv_timeout)) == SOCKET_ERROR) {
             close();
             return false;
         }
+#else
+        struct timeval tv;
+        tv.tv_sec = m_opts.recv_timeout / 1000;
+        tv.tv_usec = (m_opts.recv_timeout % 1000) * 1000;
+        if (setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)) == SOCKET_ERROR) {
+            close();
+            return false;
+        }
+#endif
+
     }
     if (m_opts.send_timeout != 0) {
+#ifdef _MSC_VER
         if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (const char*)&m_opts.send_timeout, sizeof(m_opts.send_timeout)) == SOCKET_ERROR) {
             close();
             return false;
         }
+#else
+        struct timeval tv;
+        tv.tv_sec = m_opts.recv_timeout / 1000;
+        tv.tv_usec = (m_opts.recv_timeout % 1000) * 1000;
+        if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof tv) == SOCKET_ERROR) {
+            close();
+            return false;
+        }
+#endif
     }
 
     return true;
@@ -188,7 +209,7 @@ std::optional<std::vector<uint8_t>> PlatformEasySocket::recvData(int recvLen)
 {
     std::vector<uint8_t> res(recvLen);
 
-    int received = ::recv(m_socket, reinterpret_cast<char*>(res.data()), recvLen, 0);
+    int received = (int)::recv(m_socket, reinterpret_cast<char*>(res.data()), recvLen, 0);
     if (received == SOCKET_ERROR) {
         printf("ERROR: %s\n", getErrorString().c_str());
         return std::nullopt;
@@ -225,7 +246,7 @@ std::optional<std::string> PlatformEasySocket::recvMessage(int recvLen)
 {
     std::string res;
     res.reserve(recvLen);
-    int received = ::recv(m_socket, reinterpret_cast<char*>(res.data()), recvLen, 0);
+    int received = (int)::recv(m_socket, reinterpret_cast<char*>(res.data()), recvLen, 0);
     if (received == SOCKET_ERROR) {
         return std::nullopt;
     }
@@ -238,7 +259,7 @@ std::optional<int> PlatformEasySocket::sendRaw(const char* byte, int len)
     if (m_socket == INVALID_SOCKET_VALUE) {
         return std::nullopt;
     }
-    int res = ::send(m_socket, byte, len, 0);
+    int res = (int)::send(m_socket, byte, len, 0);
     if (res != SOCKET_ERROR) {
         return res;
     }
@@ -247,7 +268,7 @@ std::optional<int> PlatformEasySocket::sendRaw(const char* byte, int len)
 
 std::optional<int> PlatformEasySocket::recvRaw(char* byte, int len)
 {
-    int recvSize = ::recv(m_socket, byte, len, 0);
+    int recvSize = (int)::recv(m_socket, byte, len, 0);
     if (recvSize > 0) {
         return recvSize;
     }
