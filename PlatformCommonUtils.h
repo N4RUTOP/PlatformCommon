@@ -9,6 +9,7 @@
 */
 
 #pragma once
+
 #include <string>
 #include <stdint.h>
 #include <vector>
@@ -17,6 +18,9 @@
 #include <filesystem>
 
 #ifdef _MSC_VER
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <Windows.h>
 #include <intrin.h>
 #elif defined(__APPLE__)
@@ -126,9 +130,15 @@ namespace PlatformCommonUtils
 	void set_log_tag_name(const std::string& name);
 	std::string get_log_tag_name();
 
+	void disable_log_for_current_thread(bool disable);
+	bool is_disable_log();
+
 	template<typename ...Args>
 	void output_log_info(const char* info, Args&&... args)
 	{
+		if (is_disable_log()) {
+			return;
+		}
 		char* buffer = new char[1024];
 		std::pair<log_info_callback, void*> pair = get_log_info_cb();
 		snprintf(buffer, 1024, info, std::forward<Args>(args)...);
@@ -178,14 +188,22 @@ namespace PlatformCommonUtils
 	/************ Other ************/
 	std::string get_current_directory_path();
 	std::string get_current_time();
+
 	void set_debug_output(bool bDebug);
+
 	bool is_debug();
+
 	int get_current_thread_id();
 
 #ifdef _MSC_VER
 	void usleep(uint32_t waitTime);
 #endif
 	void msleep(uint32_t waitTime);
+
+	void start_clock();
+	uint64_t end_clock_with_us();
+	uint64_t end_clock_with_ms();
+	uint64_t end_clock_with_s();
 };
 
 /**
@@ -210,10 +228,10 @@ namespace PlatformCommonUtils
 #define TEST_TIMER_START    auto start = std::chrono::high_resolution_clock::now();
 
 #define TEST_TIMER_US_END   auto end = std::chrono::high_resolution_clock::now(); \
-						    LOG_INFO("Execution time: %d microseconds", std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
+						    LOG_INFO("Execution time: %lld microseconds", std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
 
 #define TEST_TIMER_MS_END   auto end = std::chrono::high_resolution_clock::now(); \
-						    LOG_INFO("Execution time: %d milliseconds", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+						    LOG_INFO("Execution time: %lld milliseconds", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
 
 #define TEST_TIMER_S_END    auto end = std::chrono::high_resolution_clock::now(); \
-						    LOG_INFO("Execution time: %d second", std::chrono::duration_cast<std::chrono::seconds>(end - start).count());
+						    LOG_INFO("Execution time: %lld second", std::chrono::duration_cast<std::chrono::seconds>(end - start).count());

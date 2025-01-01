@@ -245,7 +245,7 @@ std::optional<int> PlatformEasySocket::sendMessage(const std::string& message)
 std::optional<std::string> PlatformEasySocket::recvMessage(int recvLen)
 {
     std::string res;
-    res.reserve(recvLen);
+    res.resize(recvLen);
     int received = (int)::recv(m_socket, reinterpret_cast<char*>(res.data()), recvLen, 0);
     if (received == SOCKET_ERROR) {
         return std::nullopt;

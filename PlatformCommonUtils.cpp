@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <array>
+#include <unordered_map>
+#include <unordered_set>
 
 #ifdef _MSC_VER
 #include <Windows.h>
@@ -34,6 +36,10 @@ static bool s_is_debug = false;
 static std::string s_log_tag_name = "DEV";
 
 static std::pair<PlatformCommonUtils::log_info_callback, void*> s_log_cb{ nullptr, nullptr };
+
+static std::unordered_map<int, std::chrono::high_resolution_clock::time_point> s_start_time_clock;
+
+static std::unordered_set<int> s_log_disable_set;
 
 static char* dirname(char* path)
 {
@@ -359,13 +365,15 @@ size_t PlatformCommonUtils::get_file_size(const char* path)
 #endif // WIN32
 	return 0;
 }
-
+#include <iostream>
 bool PlatformCommonUtils::path_exisit(const char* path)
 {
 #ifdef _MSC_VER
 	auto wPath = utf8_to_wchar(path);
-	struct _stat buffer;
-	return (_wstat(wPath.get(), &buffer) == 0);
+	return PathFileExistsW(wPath.get());
+	/** Large file can not work */ 
+	//struct _stat buffer;
+	//return (_wstat(wPath.get(), &buffer) == 0);
 #else
 	struct stat buffer;
 	return (stat(path, &buffer) == 0);
@@ -883,6 +891,21 @@ std::string PlatformCommonUtils::get_log_tag_name()
 	return s_log_tag_name;
 }
 
+void PlatformCommonUtils::disable_log_for_current_thread(bool disable)
+{
+	if (disable) {
+		s_log_disable_set.insert(get_current_thread_id());
+	}
+	else {
+		s_log_disable_set.erase(get_current_thread_id());
+	}
+}
+
+bool PlatformCommonUtils::is_disable_log()
+{
+	return s_log_disable_set.contains(get_current_thread_id());
+}
+
 void PlatformCommonUtils::set_debug_output(bool bDebug)
 {
 	s_is_debug = bDebug;
@@ -1374,4 +1397,30 @@ void PlatformCommonUtils::msleep(uint32_t waitTime)
 #else
 	usleep(waitTime * 1000);
 #endif // WIN32
+}
+
+void PlatformCommonUtils::start_clock()
+{
+	s_start_time_clock[get_current_thread_id()] = std::chrono::high_resolution_clock::now();
+}
+
+uint64_t PlatformCommonUtils::end_clock_with_us()
+{
+	auto start = s_start_time_clock[get_current_thread_id()];
+	auto end = std::chrono::high_resolution_clock::now();;
+	return std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+}
+
+uint64_t PlatformCommonUtils::end_clock_with_ms()
+{
+	auto start = s_start_time_clock[get_current_thread_id()];
+	auto end = std::chrono::high_resolution_clock::now();;
+	return std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+}
+
+uint64_t PlatformCommonUtils::end_clock_with_s()
+{
+	auto start = s_start_time_clock[get_current_thread_id()];
+	auto end = std::chrono::high_resolution_clock::now();;
+	return std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
 }
