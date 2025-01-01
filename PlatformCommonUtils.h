@@ -157,6 +157,15 @@ namespace PlatformCommonUtils
 	}
 
 	/************ Parse binary data ************/
+	inline uint16_t swap_uint16(uint16_t val)
+	{
+#ifdef _MSC_VER
+		return _byteswap_ushort(val);
+#else
+		return __builtin_bswap16(val);
+#endif 
+	}
+
 	inline uint32_t swap_uint32(uint32_t val)
 	{
 #ifdef _MSC_VER
@@ -173,6 +182,11 @@ namespace PlatformCommonUtils
 #else
 		return __builtin_bswap64(val);
 #endif 
+	}
+
+	inline uint16_t bin_to_uint16(const uint8_t* data, bool is_little_endian = true)
+	{
+		return is_little_endian ? *reinterpret_cast<const uint16_t*>(data) : swap_uint16(*reinterpret_cast<const uint16_t*>(data));
 	}
 
 	inline uint32_t bin_to_uint32(const uint8_t* data, bool is_little_endian = true)
