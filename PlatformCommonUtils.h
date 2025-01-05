@@ -115,6 +115,7 @@ namespace PlatformCommonUtils
 
 	/************ Process ************/
 	bool execute_process(const std::string& cmd, std::string& revMsg, int* exitCode = nullptr);
+	bool execute_process(const std::string& cmd, int& exitCode);
 	int execute_process(const std::string& cmd); // if success return process id else return -1
 	bool kill_process(const std::string& proc_path); 
 	bool kill_process_by_name(const std::string& proc_name); 
@@ -182,11 +183,6 @@ namespace PlatformCommonUtils
 #else
 		return __builtin_bswap64(val);
 #endif 
-	}
-
-	inline uint16_t bin_to_uint16(const uint8_t* data, bool is_little_endian = true)
-	{
-		return is_little_endian ? *reinterpret_cast<const uint16_t*>(data) : swap_uint16(*reinterpret_cast<const uint16_t*>(data));
 	}
 
 	inline uint32_t bin_to_uint32(const uint8_t* data, bool is_little_endian = true)

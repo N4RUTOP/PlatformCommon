@@ -306,8 +306,8 @@ bool PlatformCommonUtils::path_is_dir(const char* path)
 {
 #ifdef _MSC_VER
 	auto wPath = utf8_to_wchar(path);
-	struct _stat buffer;
-	bool exists = (_wstat(wPath.get(), &buffer) == 0);
+	struct _stati64 buffer;
+	bool exists = (_wstati64(wPath.get(), &buffer) == 0);
 	if (exists) {
 		return S_ISDIR(buffer.st_mode);
 	}
@@ -325,8 +325,8 @@ bool PlatformCommonUtils::path_is_file(const char* path)
 {
 #ifdef _MSC_VER
 	auto wPath = utf8_to_wchar(path);
-	struct _stat buffer;
-	bool exists = (_wstat(wPath.get(), &buffer) == 0);
+	struct _stati64 buffer;
+	bool exists = (_wstati64(wPath.get(), &buffer) == 0);
 	if (exists) {
 		return S_ISREG(buffer.st_mode);
 	}
@@ -351,8 +351,8 @@ size_t PlatformCommonUtils::get_file_size(const char* path)
 {
 #ifdef _MSC_VER
 	auto wPath = utf8_to_wchar(path);
-	struct _stat buffer;
-	bool exists = (_wstat(wPath.get(), &buffer) == 0);
+	struct _stati64 buffer;
+	bool exists = (_wstati64(wPath.get(), &buffer) == 0);
 	if (exists) {
 		return buffer.st_size;
 	}
@@ -371,9 +371,9 @@ bool PlatformCommonUtils::path_exisit(const char* path)
 #ifdef _MSC_VER
 	auto wPath = utf8_to_wchar(path);
 	return PathFileExistsW(wPath.get());
-	/** Large file can not work */ 
-	//struct _stat buffer;
-	//return (_wstat(wPath.get(), &buffer) == 0);
+
+	//struct _stati64 buffer;
+	//return (_wstati64(wPath.get(), &buffer) == 0);
 #else
 	struct stat buffer;
 	return (stat(path, &buffer) == 0);
@@ -391,8 +391,8 @@ bool PlatformCommonUtils::path_exisit(const std::wstring& path) {
 }
 
 bool PlatformCommonUtils::path_exisit(const wchar_t* path) {
-	struct _stat buffer;
-	return (_wstat(path, &buffer) == 0);
+	struct _stati64 buffer;
+	return (_wstati64(path, &buffer) == 0);
 }
 #endif // WIN32
 
@@ -1043,11 +1043,94 @@ bool PlatformCommonUtils::execute_process(const std::string& cmd, std::string& r
 #endif // WIN32
 }
 
+bool PlatformCommonUtils::execute_process(const std::string& cmd, int& exitCode)
+{
+#ifdef _MSC_VER
+	SECURITY_ATTRIBUTES saAttr;
+	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	saAttr.bInheritHandle = true;
+	saAttr.lpSecurityDescriptor = nullptr;
+
+	PROCESS_INFORMATION piProcInfo;
+	STARTUPINFOW siStartInfo;
+
+	ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
+	ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
+	siStartInfo.cb = sizeof(STARTUPINFO);
+	siStartInfo.hStdError = nullptr;
+	siStartInfo.hStdOutput = nullptr;
+	siStartInfo.dwFlags |= STARTF_USESHOWWINDOW;
+	siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
+	siStartInfo.wShowWindow = SW_HIDE;
+
+	auto _cmd = utf8_to_wchar(cmd.c_str());
+	bool bSuccess = CreateProcessW(
+		nullptr,
+		_cmd.get(),
+		nullptr,
+		nullptr,
+		FALSE,
+		0,
+		nullptr,
+		nullptr,
+		&siStartInfo,
+		&piProcInfo
+	);
+
+	if (!bSuccess) {
+		LOG_ERROR("CreateProcess failed with error: %d", GetLastError());
+		return false;
+	}
+	WaitForSingleObject(piProcInfo.hProcess, INFINITE);
+	DWORD _exitCode = 0;
+	GetExitCodeProcess(piProcInfo.hProcess, &_exitCode);
+	exitCode = _exitCode;
+	CloseHandle(piProcInfo.hProcess);
+	CloseHandle(piProcInfo.hThread);
+	return true;
+#else
+	pid_t pid = fork();
+
+	if (pid == -1) {
+		LOG_ERROR("fork failed");
+		return false;
+	}
+
+	if (pid == 0) {
+		std::vector<const char*> args;
+		std::istringstream iss(cmd);
+		std::string token;
+		while (std::getline(iss, token, ' ')) {
+			args.push_back(strdup(token.c_str()));
+		}
+		args.push_back(nullptr);
+
+		execvp(args[0], const_cast<char**>(args.data()));
+
+		LOG_ERROR("execvp failed with error: %d", errno);
+		exit(1);
+	}
+	else {
+		int status = 0;
+		waitpid(pid, &status, 0);
+
+		if (WIFEXITED(status)) {
+			exitCode = WEXITSTATUS(status);
+		}
+		else {
+			LOG_ERROR("Child process did not exit normally");
+			return false;
+		}
+	}
+
+	return true;
+#endif
+}
+
 int PlatformCommonUtils::execute_process(const std::string& cmd)
 {
 	int procID = -1;
 #ifdef _MSC_VER
-	//LOG_INFO_D("excute cmd: %s", cmd.c_str());
 	SECURITY_ATTRIBUTES saAttr;
 	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
 	saAttr.bInheritHandle = true;
