@@ -3,7 +3,7 @@
 using namespace std;
 using namespace PlatformCommonUtils;
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #include <Windows.h>
 #else
 #include <sys/stat.h>
@@ -11,7 +11,7 @@ using namespace PlatformCommonUtils;
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
-#endif // WIN32
+#endif // _MSC_VER
 
 class IInterProcessCommunitor
 {
@@ -25,12 +25,18 @@ public:
     virtual void setErrorCode(int error) { m_error = error; }
     virtual int getErrorCode() { return m_error; }
 
-    virtual void setTimeout(uint32_t timeout) { m_timeout = timeout; }
-    virtual uint32_t getTimeout() { return m_timeout; }
+    virtual void setReadTimeot(uint32_t timeout) { m_rTimeout = timeout; }
+    virtual uint32_t getReadTimeout() { return m_rTimeout; }
+
+    virtual void setWriteTimeot(uint32_t timeout) { m_wTimeout = timeout; }
+    virtual uint32_t getWriteTimeout() { return m_wTimeout; }
     
 private:
     int m_error = 0;
-    uint32_t m_timeout = 60;
+
+    uint32_t m_rTimeout = 60;
+    uint32_t m_wTimeout = 60;
+
 };
 
 class IPCWithNamedPipe : public IInterProcessCommunitor
@@ -41,13 +47,13 @@ public:
 		const string& pipeName) :
 		m_pipeName(pipeName), m_processPath(processPath)
 	{
-#ifdef WIN32
+#ifdef _MSC_VER
 		memset(&m_pi, 0, sizeof(PROCESS_INFORMATION));
 #endif
 	}
 
 	bool start() override {
-#ifdef WIN32
+#ifdef _MSC_VER
         setErrorCode(0);
         stop();
 		STARTUPINFOW si;
@@ -77,7 +83,7 @@ public:
 	}
 
 	bool sentData(const std::string& data) override {
-#ifdef WIN32
+#ifdef _MSC_VER
         setErrorCode(0);
         if (m_hPipe == INVALID_HANDLE_VALUE) {
             return false;
@@ -87,7 +93,7 @@ public:
                    0, // read multiplier
                    0, // read constant (milliseconds)
                    0, // Write multiplier
-                   1000 * getTimeout()  // Write Constant
+                   1000 * getWriteTimeout()  // Write Constant
         };
         SetCommTimeouts(m_hPipe, &timeouts);
 		DWORD dwBytesWritten;
@@ -110,7 +116,7 @@ public:
 	}
 
 	bool receiveData(std::string& data) override {
-#ifdef WIN32
+#ifdef _MSC_VER
         setErrorCode(0);
         if (m_hPipe == INVALID_HANDLE_VALUE) {
             return false;
@@ -120,7 +126,7 @@ public:
 		char buffer[1024] = { 0 };
         COMMTIMEOUTS timeouts = { 0, //interval timeout. 0 = not used
                            0, // read multiplier
-                           1000 * getTimeout(), // read constant (milliseconds)
+                           1000 * getReadTimeout(), // read constant (milliseconds)
                            0, // Write multiplier
                            0  // Write Constant
         };
@@ -145,7 +151,7 @@ public:
 	}
 
 	void stop() override {
-#ifdef WIN32
+#ifdef _MSC_VER
 		if (m_hPipe != nullptr) {
 			DisconnectNamedPipe(m_hPipe);
 			CloseHandle(m_hPipe);
@@ -167,7 +173,7 @@ private:
 	string m_pipeName;
 	string m_cachePath;
 
-#ifdef WIN32
+#ifdef _MSC_VER
 	PROCESS_INFORMATION m_pi;
 	HANDLE m_hPipe = INVALID_HANDLE_VALUE;
 #endif
@@ -186,7 +192,7 @@ public:
     
     bool start() override
     {
-#ifndef WIN32
+#ifndef _MSC_VER
         stop();
         // for unix
         setErrorCode(0);
@@ -212,7 +218,7 @@ public:
     }
     
     bool sentData(const std::string& data) override {
-#ifndef WIN32
+#ifndef _MSC_VER
         setErrorCode(0);
         int fd = open(m_wfifo.c_str(), O_WRONLY | O_NONBLOCK);
         m_fdW = fd;
@@ -224,7 +230,7 @@ public:
         fd_set set;
         FD_ZERO(&set); /* clear the set */
         FD_SET(fd, &set);
-        timeout.tv_sec = getTimeout();
+        timeout.tv_sec = getWriteTimeout();
         timeout.tv_usec = 0;
         int rv = select(fd + 1, nullptr, &set, nullptr, &timeout);
         bool res = false;
@@ -247,7 +253,7 @@ public:
     }
     
     bool receiveData(std::string& data) override {
-#ifndef WIN32
+#ifndef _MSC_VER
         setErrorCode(0);
         int fd = open(m_rfifo.c_str(), O_RDONLY | O_NONBLOCK);
         m_fdR = fd;
@@ -259,7 +265,7 @@ public:
         fd_set set;
         FD_ZERO(&set); /* clear the set */
         FD_SET(fd, &set);
-        timeout.tv_sec = getTimeout();
+        timeout.tv_sec = getReadTimeout();
         timeout.tv_usec = 0;
         int rv = select(fd + 1, &set, nullptr, nullptr, &timeout);
         bool res = false;
@@ -286,7 +292,7 @@ public:
     }
 
     void stop() override {
-#ifndef WIN32
+#ifndef _MSC_VER
         if (m_pid > 0) {
             kill(m_pid, SIGKILL);
             m_pid = -1;
@@ -370,7 +376,8 @@ int PlatformCommonIPC::getErrorCode() const
 
 void PlatformCommonIPC::setRWTimeout(uint32_t timeout)
 {
-    m_timeout = timeout;
+    m_pIPCCommtor->setReadTimeot(timeout);
+    m_pIPCCommtor->setWriteTimeot(timeout);
 }
 
 void PlatformCommonIPC::setFIFOFileName(const std::string &wfifo, const std::string &rfifo) { 

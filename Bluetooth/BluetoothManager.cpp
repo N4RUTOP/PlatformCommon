@@ -1,6 +1,6 @@
 ﻿#include "BluetoothManager.h"
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #include <windows.h>
 #include <setupapi.h>
 #include <devguid.h>  
@@ -23,7 +23,7 @@ BluetootDevicehManager::BluetootDevicehManager()
 
 bool BluetootDevicehManager::isBluetoothSupported()
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	HDEVINFO hDevInfo = SetupDiGetClassDevs(&GUID_DEVCLASS_BLUETOOTH, nullptr, nullptr, DIGCF_PRESENT);
 	if (hDevInfo == INVALID_HANDLE_VALUE) {
 		return false;
@@ -42,7 +42,7 @@ bool BluetootDevicehManager::isBluetoothSupported()
 
 bool BluetootDevicehManager::isBluetoothOpened()
 {
-#ifdef WIN32
+#ifdef _MSC_VER
 	HBLUETOOTH_RADIO_FIND hFind = nullptr;
 	BLUETOOTH_FIND_RADIO_PARAMS findParams = { sizeof(BLUETOOTH_FIND_RADIO_PARAMS) };
 	HANDLE hRadio = nullptr;

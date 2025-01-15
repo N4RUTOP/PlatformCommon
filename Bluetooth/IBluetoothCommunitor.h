@@ -57,7 +57,7 @@ public:
 	virtual BluetoothError disconnect() = 0;
 };
 
-#ifdef WIN32
+#ifdef _MSC_VER
 class BluetoothCommunitorForWin : public IBluetoothCommunitor
 {
 public:

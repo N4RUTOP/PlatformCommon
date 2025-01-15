@@ -40,7 +40,7 @@ public:
 	virtual void removeBluetoothEventSubscriber(BluetoothEventCallback cb, void* user_data) = 0;
 };
 
-#ifdef WIN32
+#ifdef _MSC_VER
 class BluetoothMonitorForWin : public IBluetoothMonitor
 {
 public:

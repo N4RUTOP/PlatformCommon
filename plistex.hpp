@@ -1,5 +1,5 @@
 /**
- *   Plist for smart ptr
+ *   Plist with smart ptr
  *
  *   Created by lihuanqian on 12/14/2024
  *

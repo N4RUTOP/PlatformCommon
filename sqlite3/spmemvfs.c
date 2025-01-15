@@ -373,7 +373,7 @@ int spmemvfsOpen( sqlite3_vfs * vfs, const char * path, sqlite3_file * file, int
 	memfile->base.pMethods = &g_spmemfile_io_memthods;
 	memfile->flags = flags;
 
-#ifdef WIN32
+#ifdef _MSC_VER
 	memfile->path = _strdup(path);
 #else
 	memfile->path = strdup(path);
@@ -585,7 +585,7 @@ int spmemvfs_open_db( spmemvfs_db_t * db, const char * path, spmembuffer_t * mem
 	memset( db, 0, sizeof( spmemvfs_db_t ) );
 
 	iter = (spmembuffer_link_t*)calloc( sizeof( spmembuffer_link_t ), 1 );
-#ifdef WIN32
+#ifdef _MSC_VER
 	iter->path = _strdup(path);
 #else
 	iter->path = strdup(path);

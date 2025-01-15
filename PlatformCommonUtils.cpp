@@ -354,7 +354,7 @@ size_t PlatformCommonUtils::get_file_size(const char* path)
 	struct _stati64 buffer;
 	bool exists = (_wstati64(wPath.get(), &buffer) == 0);
 	if (exists) {
-		return buffer.st_size;
+		return (size_t)buffer.st_size;
 	}
 #else
 	struct stat buffer;
@@ -793,7 +793,8 @@ std::vector<uint8_t> PlatformCommonUtils::read_data_from_file(const std::string&
 	size_t size = get_file_size(path.c_str());
 	std::vector<uint8_t> data(size);
 	if (f) {
-		data.reserve(size);
+		// May be it will convert to string, reserver 1 byte to append '\0'
+		data.reserve(size + 1); 
 		fread(data.data(), 1, size, f);
 		fclose(f);
 	}
@@ -1046,6 +1047,7 @@ bool PlatformCommonUtils::execute_process(const std::string& cmd, std::string& r
 bool PlatformCommonUtils::execute_process(const std::string& cmd, int& exitCode)
 {
 #ifdef _MSC_VER
+	//LOG_INFO_D("excute cmd: %s", cmd.c_str());
 	SECURITY_ATTRIBUTES saAttr;
 	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
 	saAttr.bInheritHandle = true;
@@ -1131,6 +1133,7 @@ int PlatformCommonUtils::execute_process(const std::string& cmd)
 {
 	int procID = -1;
 #ifdef _MSC_VER
+	//LOG_INFO_D("excute cmd: %s", cmd.c_str());
 	SECURITY_ATTRIBUTES saAttr;
 	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
 	saAttr.bInheritHandle = true;

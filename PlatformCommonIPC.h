@@ -41,8 +41,6 @@ private:
     std::string m_rfifo;
 	IPCMethod m_ipcMethod;
 
-	uint32_t m_timeout = 30;
-
 	int m_errorCode = 0;
 	class IInterProcessCommunitor* m_pIPCCommtor = nullptr;
 };

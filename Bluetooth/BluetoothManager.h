@@ -55,7 +55,7 @@ public:
 	BluetoothError disconnect() override;
 
 private:
-#ifdef WIN32
+#ifdef _MSC_VER
 	std::unique_ptr<IBluetoothCommunitor> m_bthCommt = std::make_unique<BluetoothCommunitorForWin>();
 	std::unique_ptr<IBluetoothMonitor> m_bthMonitor = std::make_unique<BluetoothMonitorForWin>();
 #else

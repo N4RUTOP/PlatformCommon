@@ -22,7 +22,7 @@ std::atomic_bool g_check_stopped = true;
 
 static CThread<void> g_thread;
 
-#ifdef WIN32
+#ifdef _MSC_VER
 static string getMAC(BLUETOOTH_ADDRESS Daddress)
 {
 	ostringstream oss;
