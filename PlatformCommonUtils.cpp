@@ -778,6 +778,9 @@ bool PlatformCommonUtils::write_data_to_file(const std::string& path, const std:
 
 bool PlatformCommonUtils::write_data_to_file(const char* path, const uint8_t* data, size_t len)
 {
+	if (data == nullptr || len == 0) {
+		return false;
+	}
 	FILE* f = open_file(path, "wb");
 	if (f) {
 		size_t wcnt = fwrite(data, 1, len, f);
@@ -1333,6 +1336,19 @@ void PlatformCommonUtils::kill_process_completely(const std::string& proc_path)
 void PlatformCommonUtils::kill_process_by_name_completely(const std::string& proc_name)
 {
 	while (kill_process_by_name(proc_name));
+}
+
+std::vector<char> PlatformCommonUtils::hex_to_bytes(const std::string& hex)
+{
+	std::vector<char> bytes;
+
+	for (unsigned int i = 0; i < hex.length(); i += 2) {
+		std::string byteString = hex.substr(i, 2);
+		char byte = (char)strtol(byteString.c_str(), NULL, 16);
+		bytes.push_back(byte);
+	}
+
+	return bytes;
 }
 
 std::string PlatformCommonUtils::get_current_directory_path()

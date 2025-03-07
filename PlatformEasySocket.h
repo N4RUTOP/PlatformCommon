@@ -18,7 +18,7 @@ struct SocketSetupOptions
 	int protocol = 0; 
 
 	int send_timeout = 5000; // send timeout (ms)
-	int recv_timeout = 5000; // send timeout (ms)
+	int recv_timeout = 5000; // recv timeout (ms)
 
 	int port = 0; // port
 	std::string ip; // ip

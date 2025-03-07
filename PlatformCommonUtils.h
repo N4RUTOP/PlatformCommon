@@ -195,6 +195,8 @@ namespace PlatformCommonUtils
 		return is_little_endian ? *reinterpret_cast<const uint64_t*>(data) : swap_uint64(*reinterpret_cast<const uint64_t*>(data));
 	}
 
+	std::vector<char> hex_to_bytes(const std::string& hex);
+
 	/************ Other ************/
 	std::string get_current_directory_path();
 	std::string get_current_time();
@@ -245,3 +247,5 @@ namespace PlatformCommonUtils
 
 #define TEST_TIMER_S_END    auto end = std::chrono::high_resolution_clock::now(); \
 						    LOG_INFO("Execution time: %lld second", std::chrono::duration_cast<std::chrono::seconds>(end - start).count());
+
+#define UNUSED(x) (void)(x)
